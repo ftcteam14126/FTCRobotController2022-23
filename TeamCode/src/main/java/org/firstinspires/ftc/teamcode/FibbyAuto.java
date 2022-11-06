@@ -97,6 +97,9 @@ public class FibbyAuto extends LinearOpMode
     private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
 
+    //----------------------------------------------------------------------------------------------------
+    // Start of the Auto
+    //----------------------------------------------------------------------------------------------------
     @Override
     public void runOpMode()
     {
@@ -181,75 +184,9 @@ public class FibbyAuto extends LinearOpMode
         //AutoTransitioner.transitionOnStop(this, "FibbyTeleOp");
     }
 
-    public void EncoderDrive(double speed, int distance, boolean strafe, boolean left)
-    {
-
-        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        leftFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        if (strafe)
-        {
-            if (left)
-            {
-                leftFront.setTargetPosition(distance);
-                rightFront.setTargetPosition(-distance);
-                leftRear.setTargetPosition(-distance);
-                rightRear.setTargetPosition(distance);
-            }
-            else
-            {
-                leftFront.setTargetPosition(-distance);
-                rightFront.setTargetPosition(distance);
-                leftRear.setTargetPosition(distance);
-                rightRear.setTargetPosition(-distance);
-            }
-
-        }
-        else
-        {
-            leftFront.setTargetPosition(-distance);
-            rightFront.setTargetPosition(-distance);
-            leftRear.setTargetPosition(-distance);
-            rightRear.setTargetPosition(-distance);
-        }
-
-
-        leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        leftRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightRear.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        leftFront.setPower(speed);
-        rightFront.setPower(speed);
-        leftRear.setPower(speed);
-        rightRear.setPower(speed);
-
-        while (opModeIsActive() && leftFront.isBusy())
-        {
-
-        }
-
-        leftFront.setPower(0);
-        rightFront.setPower(0);
-        leftRear.setPower(0);
-        rightRear.setPower(0);
-
-        leftFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
-
-    /**
-     * Initialize the Vuforia localization engine.
-     */
+    //----------------------------------------------------------------------------------------------------
+    // Camera & Tensor Flow Initialization
+    //----------------------------------------------------------------------------------------------------
     private void initVuforia()
     {
         /*
@@ -264,9 +201,6 @@ public class FibbyAuto extends LinearOpMode
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
     }
 
-    /**
-     * Initialize the TensorFlow Object Detection engine.
-     */
     private void initTfod()
     {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
@@ -283,36 +217,9 @@ public class FibbyAuto extends LinearOpMode
         // tfod.loadModelFromFile(TFOD_MODEL_FILE, LABELS);
     }
 
-    public void Parking()
-    {
-        if (coneImage == 1)
-        {
-            telemetry.addData(">", "coneimage1");
-            telemetry.update();
-            //move left
-            EncoderDrive(0.35,800,true,true);
-            //move forward
-            EncoderDrive(0.35,1080,false,false);
-        }
-        else if (coneImage == 2)
-        {
-            telemetry.addData(">", "coneimage2");
-            telemetry.update();
-            //move forward
-            EncoderDrive(0.35,1080,false,false);
-
-        }
-        else
-        {
-            telemetry.addData(">", "coneimage3");
-            telemetry.update();
-            //move right
-            EncoderDrive(0.35,800,true,false);
-            //move forward
-            EncoderDrive(0.35,1080,false,false);
-        }
-    }
-
+    //----------------------------------------------------------------------------------------------------
+    // Get Gyro Angle
+    //----------------------------------------------------------------------------------------------------
     private void checkOrientation() {
         // read the orientation of the robot
         angles = this.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
@@ -324,6 +231,9 @@ public class FibbyAuto extends LinearOpMode
         telemetry.update();
     }
 
+    //----------------------------------------------------------------------------------------------------
+    // "My Blocks"
+    //----------------------------------------------------------------------------------------------------
     public void GyroDriveENC(double distance, double power, int course)
     {
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -340,39 +250,73 @@ public class FibbyAuto extends LinearOpMode
         rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
-       while ((parallelEncoder.getCurrentPosition()/tickToINCH <= distance && distance > 0) || (distance <0 && parallelEncoder.getCurrentPosition()/tickToINCH >= distance)) {
-           checkOrientation();
+        while ((parallelEncoder.getCurrentPosition()/tickToINCH <= distance && distance > 0) || (distance <0 && parallelEncoder.getCurrentPosition()/tickToINCH >= distance)) {
+            checkOrientation();
 
-           // it will make input power always positive
-           //power = Math.abs(power);
+            // it will make input power always positive
+            //power = Math.abs(power);
 
-           corrHeading = course - heading;
-           diffCorrection = Math.abs(corrHeading * corrFactor);
+            corrHeading = course - heading;
+            diffCorrection = Math.abs(corrHeading * corrFactor);
 
-           if (corrHeading < 0)
-           {
-               leftFrontPower = (power - diffCorrection);
-               leftRearPower = (power - diffCorrection);
-               rightFrontPower = (power);
-               rightRearPower = (power);
-           }
-           else
-           {
-               leftFrontPower = (power);
-               leftRearPower = (power);
-               rightFrontPower = (power - diffCorrection);
-               rightRearPower = (power - diffCorrection);
-           }
+            if (corrHeading < 0)
+            {
+                leftFrontPower = (power - diffCorrection);
+                leftRearPower = (power - diffCorrection);
+                rightFrontPower = (power);
+                rightRearPower = (power);
+            }
+            else
+            {
+                leftFrontPower = (power);
+                leftRearPower = (power);
+                rightFrontPower = (power - diffCorrection);
+                rightRearPower = (power - diffCorrection);
+            }
 
-           leftFront.setPower(leftFrontPower);
-           leftRear.setPower(leftRearPower);
-           rightFront.setPower(rightFrontPower);
-           rightRear.setPower(rightRearPower);
-       }
+            leftFront.setPower(leftFrontPower);
+            leftRear.setPower(leftRearPower);
+            rightFront.setPower(rightFrontPower);
+            rightRear.setPower(rightRearPower);
+        }
 
         leftFront.setPower(0);
         leftRear.setPower(0);
         rightFront.setPower(0);
         rightRear.setPower(0);
     }
+
+    //----------------------------------------------------------------------------------------------------
+    // Auto Runs
+    //----------------------------------------------------------------------------------------------------
+    public void Parking()
+    {
+        if (coneImage == 1)
+        {
+            telemetry.addData(">", "coneimage1");
+            telemetry.update();
+            //move left
+
+            //move forward
+
+        }
+        else if (coneImage == 2)
+        {
+            telemetry.addData(">", "coneimage2");
+            telemetry.update();
+            //move forward
+
+
+        }
+        else
+        {
+            telemetry.addData(">", "coneimage3");
+            telemetry.update();
+            //move right
+
+            //move forward
+
+        }
+    }
+
 }
