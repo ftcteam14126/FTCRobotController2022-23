@@ -36,6 +36,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.util.Encoder;
 
@@ -62,6 +63,7 @@ public class FibbyTeleOp extends OpMode
     public DcMotor  rightFront  = null;
     public DcMotor  leftRear   = null;
     public DcMotor  rightRear  = null;
+    //public Servo grabber = null;
 
     public DcMotor lift = null;
     DigitalChannel L_limit;
@@ -77,6 +79,7 @@ public class FibbyTeleOp extends OpMode
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         leftRear  = hardwareMap.get(DcMotor.class, "leftRear");
         rightRear = hardwareMap.get(DcMotor.class, "rightRear");
+        //grabber = hardwareMap.get(Servo.class,"Grabber");
 
 
 
@@ -98,6 +101,8 @@ public class FibbyTeleOp extends OpMode
         leftRear.setDirection(DcMotor.Direction.REVERSE);
         rightRear.setDirection(DcMotor.Direction.FORWARD);
 
+       //grabber.setPosition(0);
+
 
         parallelEncoder = hardwareMap.get(DcMotor.class, "parallelEncoder");
         perpendicularEncoder = hardwareMap.get(DcMotor.class, "perpendicularEncoder");
@@ -105,8 +110,8 @@ public class FibbyTeleOp extends OpMode
         parallelEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         perpendicularEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        perpendicularEncoder.setDirection(DcMotor.Direction.REVERSE);
-        parallelEncoder.setDirection(DcMotor.Direction.REVERSE);
+       perpendicularEncoder.setDirection(DcMotor.Direction.REVERSE);
+      parallelEncoder.setDirection(DcMotor.Direction.FORWARD);
 
         // If there are encoders connected, switch to RUN_USING_ENCODER mode for greater accuracy
         // leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -163,27 +168,22 @@ public class FibbyTeleOp extends OpMode
             rightFrontPower = -gamepad1.right_stick_y;
             leftRearPower = -gamepad1.right_stick_y;
             rightRearPower = -gamepad1.right_stick_y;
-        }
-        else if (gamepad1.left_stick_x != 0)
-        {
+        } else if (gamepad1.left_stick_x != 0) {
             leftFrontPower = gamepad1.left_stick_x;
             rightFrontPower = -gamepad1.left_stick_x;
             leftRearPower = gamepad1.left_stick_x;
             rightRearPower = -gamepad1.left_stick_x;
-        }
-        else if (gamepad1.left_trigger != 0) { //if left trigger is being pressed it spinning left
+        } else if (gamepad1.left_trigger != 0) { //if left trigger is being pressed it spinning left
             leftFrontPower = -gamepad1.left_trigger;
             rightFrontPower = gamepad1.left_trigger;
             leftRearPower = gamepad1.left_trigger;
             rightRearPower = -gamepad1.left_trigger;
-        }
-        else if (gamepad1.right_trigger != 0) {
+        } else if (gamepad1.right_trigger != 0) {
             leftFrontPower = gamepad1.right_trigger;
             rightFrontPower = -gamepad1.right_trigger;
             leftRearPower = -gamepad1.right_trigger;
             rightRearPower = gamepad1.right_trigger;
-        }
-        else {
+        } else {
             leftFrontPower = 0;
             rightFrontPower = 0;
             leftRearPower = 0;
@@ -194,13 +194,11 @@ public class FibbyTeleOp extends OpMode
         // OOOOORRRRRR if the driver is trying to raise the lift and the upper limit switch is not pressed then run the lift motor, otherwise don't.
 
 
-        if ((gamepad2.right_stick_y >0 && L_limit.getState() == true) || (gamepad2.right_stick_y <0 && U_limit.getState() == true))
+        if ((gamepad2.right_stick_y > 0 && L_limit.getState() == true) || (gamepad2.right_stick_y < 0 && U_limit.getState() == true))
         //if (gamepad2.right_stick_y != 0)
         {
-            liftPower = -gamepad2.right_stick_y ;
-        }
-        else
-        {
+            liftPower = -gamepad2.right_stick_y;
+        } else {
             liftPower = 0;
         }
 
@@ -211,7 +209,16 @@ public class FibbyTeleOp extends OpMode
 
         lift.setPower(-liftPower);
 
+        //telemetry.addData("Servo Pos", grabber.getPosition());
+    /*    if (gamepad2.left_bumper){
+            grabber.setPosition(0);
+        }
+        else if (gamepad2.right_bumper){
+            grabber.setPosition(0.0765);
+        }
 
+
+     */
     }
 
     /*

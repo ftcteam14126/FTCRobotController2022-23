@@ -117,7 +117,7 @@ public class FibbyAuto extends LinearOpMode
         perpendicularEncoder = hardwareMap.get(DcMotor.class, "perpendicularEncoder");
 
         parallelEncoder.setDirection(DcMotor.Direction.REVERSE);
-        perpendicularEncoder.setDirection(DcMotor.Direction.FORWARD);
+        perpendicularEncoder.setDirection(DcMotor.Direction.REVERSE);
 
         BNO055IMU.Parameters gyro_parameters = new BNO055IMU.Parameters();
         gyro_parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
@@ -178,8 +178,14 @@ public class FibbyAuto extends LinearOpMode
             tfod.shutdown();
         }
 
-        GyroDriveENC(55, 0.25, 0);
-        GyroDriveENC(26, 0.25, 90);
+        GyroStrafeENC(50, 0.5, "left", 0);
+        GyroStrafeENC(50, 0.5, "right", 0);
+
+        //GyroDriveENC(55, 0.25, 0);
+        //GyroDriveENC(26, 0.25, 90);
+
+        //GyroDriveENC(90, 0.5, 0);
+       // GyroDriveENC(95, 0.5,  0);
 
         //AutoTransitioner.transitionOnStop(this, "FibbyTeleOp");
     }
@@ -250,7 +256,7 @@ public class FibbyAuto extends LinearOpMode
         rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
-        while ((parallelEncoder.getCurrentPosition()/tickToINCH <= distance && distance > 0) || (distance <0 && parallelEncoder.getCurrentPosition()/tickToINCH >= distance)) {
+        while ((parallelEncoder.getCurrentPosition()/tickToINCH <= distance && distance > 0) || (distance <0 && parallelEncoder.getCurrentPosition()/tickToINCH >= distance) && (opModeIsActive())) {
             checkOrientation();
 
             // it will make input power always positive
@@ -286,6 +292,78 @@ public class FibbyAuto extends LinearOpMode
         rightRear.setPower(0);
     }
 
+    public void GyroStrafeENC(double distance, double power, String direction, int course)
+    {
+        distance = Math.abs(distance);
+        //direction = toString().toLowerCase(direction);
+
+        leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        parallelEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        perpendicularEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+        while (Math.abs(perpendicularEncoder.getCurrentPosition()/tickToINCH) <= distance && (opModeIsActive()))
+        {
+            checkOrientation();
+
+            // it will make input power always positive
+            //power = Math.abs(power);
+
+            corrHeading = course - heading;
+            diffCorrection = Math.abs(corrHeading * corrFactor);
+
+            if ((corrHeading < 0 && direction == "left") || (corrHeading > 0 && direction == "right"))
+            {
+                leftFrontPower = (power);
+                leftRearPower = (power - diffCorrection);
+                rightFrontPower = (power);
+                rightRearPower = (power - diffCorrection);
+            }
+            else
+            {
+                leftFrontPower = (power - diffCorrection);
+                leftRearPower = (power);
+                rightFrontPower = (power - diffCorrection);
+                rightRearPower = (power);
+            }
+
+            if(direction == "left")
+            {
+                leftFront.setPower(-leftFrontPower);
+                leftRear.setPower(leftRearPower);
+                rightFront.setPower(rightFrontPower);
+                rightRear.setPower(-rightRearPower);
+            }
+            else if(direction == "right")
+            {
+                leftFront.setPower(leftFrontPower);
+                leftRear.setPower(-leftRearPower);
+                rightFront.setPower(-rightFrontPower);
+                rightRear.setPower(rightRearPower);
+            }
+            else
+            {
+                leftFront.setPower(0);
+                leftRear.setPower(0);
+                rightFront.setPower(0);
+                rightRear.setPower(0);
+            }
+        }
+
+        leftFront.setPower(0);
+        leftRear.setPower(0);
+        rightFront.setPower(0);
+        rightRear.setPower(0);
+    }
     //----------------------------------------------------------------------------------------------------
     // Auto Runs
     //----------------------------------------------------------------------------------------------------
