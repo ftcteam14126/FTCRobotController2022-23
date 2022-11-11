@@ -63,9 +63,10 @@ public class FibbyTeleOp extends OpMode
     public DcMotor  rightFront  = null;
     public DcMotor  leftRear   = null;
     public DcMotor  rightRear  = null;
-    //public Servo grabber = null;
+    public Servo grabber = null;
 
     public DcMotor lift = null;
+    public DcMotor lift2 = null;
     DigitalChannel L_limit;
     DigitalChannel U_limit;
     private DcMotor parallelEncoder, perpendicularEncoder;
@@ -79,15 +80,17 @@ public class FibbyTeleOp extends OpMode
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         leftRear  = hardwareMap.get(DcMotor.class, "leftRear");
         rightRear = hardwareMap.get(DcMotor.class, "rightRear");
-        //grabber = hardwareMap.get(Servo.class,"Grabber");
+        grabber = hardwareMap.get(Servo.class,"Grabber");
 
 
 
         lift = hardwareMap.get(DcMotor.class,"Lift");
+        lift2 = hardwareMap.get(DcMotor.class,"Lift2");
 
         L_limit = hardwareMap.get(DigitalChannel.class, "L_limit");
         U_limit = hardwareMap.get(DigitalChannel.class, "U_limit");
         lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        lift2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // set the digital channel to input.
         L_limit.setMode(DigitalChannel.Mode.INPUT);
@@ -101,7 +104,7 @@ public class FibbyTeleOp extends OpMode
         leftRear.setDirection(DcMotor.Direction.REVERSE);
         rightRear.setDirection(DcMotor.Direction.FORWARD);
 
-       //grabber.setPosition(0);
+       grabber.setPosition(0);
 
 
         parallelEncoder = hardwareMap.get(DcMotor.class, "parallelEncoder");
@@ -197,20 +200,25 @@ public class FibbyTeleOp extends OpMode
         if ((gamepad2.right_stick_y > 0 && L_limit.getState() == true) || (gamepad2.right_stick_y < 0 && U_limit.getState() == true))
         //if (gamepad2.right_stick_y != 0)
         {
-            liftPower = -gamepad2.right_stick_y;
+            if(gamepad2.right_stick_y < 0)
+            liftPower = gamepad2.right_stick_y;
+            else
+            liftPower = gamepad2.right_stick_y * .75;
         } else {
             liftPower = 0;
         }
 
         leftFront.setPower(-leftFrontPower);
         rightFront.setPower(-rightFrontPower);
+
         leftRear.setPower(-leftRearPower);
         rightRear.setPower(-rightRearPower);
 
         lift.setPower(-liftPower);
+        lift2.setPower(liftPower);
 
         //telemetry.addData("Servo Pos", grabber.getPosition());
-    /*    if (gamepad2.left_bumper){
+        if (gamepad2.left_bumper){
             grabber.setPosition(0);
         }
         else if (gamepad2.right_bumper){
@@ -218,7 +226,7 @@ public class FibbyTeleOp extends OpMode
         }
 
 
-     */
+
     }
 
     /*
