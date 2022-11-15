@@ -35,6 +35,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -63,6 +65,14 @@ public class FibbyAuto extends LinearOpMode
 
     public DcMotor parallelEncoder;
     public DcMotor perpendicularEncoder;
+
+    public DcMotor lift  = null;
+    public DcMotor lift2 = null;
+
+    public Servo grabber = null;
+
+    DigitalChannel L_limit;
+    DigitalChannel U_limit;
 
     private double leftFrontPower;
     private double leftRearPower;
@@ -118,6 +128,30 @@ public class FibbyAuto extends LinearOpMode
 
         parallelEncoder.setDirection(DcMotor.Direction.REVERSE);
         perpendicularEncoder.setDirection(DcMotor.Direction.REVERSE);
+
+        lift  = hardwareMap.get(DcMotor.class,"Lift");
+        lift2 = hardwareMap.get(DcMotor.class,"Lift2");
+
+        lift.setDirection(DcMotor.Direction.REVERSE);
+        lift2.setDirection(DcMotor.Direction.REVERSE);
+
+        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        lift2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        lift2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        lift2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        grabber = hardwareMap.get(Servo .class,"Grabber");
+        grabber.setPosition(0.0765);
+
+        L_limit = hardwareMap.get(DigitalChannel.class, "L_limit");
+        U_limit = hardwareMap.get(DigitalChannel.class, "U_limit");
+
+        L_limit.setMode(DigitalChannel.Mode.INPUT);
+        U_limit.setMode(DigitalChannel.Mode.INPUT);
 
         BNO055IMU.Parameters gyro_parameters = new BNO055IMU.Parameters();
         gyro_parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
@@ -178,8 +212,12 @@ public class FibbyAuto extends LinearOpMode
             tfod.shutdown();
         }
 
-        GyroStrafeENC(50, 0.5, "left", 0);
-        GyroStrafeENC(50, 0.5, "right", 0);
+        liftENC(500,0.75);
+        sleep(3000);
+        liftENC(0,-0.5);
+
+        //GyroStrafeENC(50, 0.5, "left", 0);
+        //GyroStrafeENC(50, 0.5, "right", 0);
 
         //GyroDriveENC(55, 0.25, 0);
         //GyroDriveENC(26, 0.25, 90);
@@ -256,7 +294,8 @@ public class FibbyAuto extends LinearOpMode
         rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
-        while ((parallelEncoder.getCurrentPosition()/tickToINCH <= distance && distance > 0) || (distance <0 && parallelEncoder.getCurrentPosition()/tickToINCH >= distance) && (opModeIsActive())) {
+        while ((parallelEncoder.getCurrentPosition()/tickToINCH <= distance && distance > 0) || (distance <0 && parallelEncoder.getCurrentPosition()/tickToINCH >= distance) && (opModeIsActive()))
+        {
             checkOrientation();
 
             // it will make input power always positive
@@ -364,6 +403,20 @@ public class FibbyAuto extends LinearOpMode
         rightFront.setPower(0);
         rightRear.setPower(0);
     }
+
+    public void liftENC(double distance, double power)
+    {
+        if (distance > 1300)
+            distance = 1300;
+        while ((power > 0 && lift.getCurrentPosition() <= distance) || ((power < 0 && lift.getCurrentPosition() >= distance + 15 && L_limit.getState() == true)) && (opModeIsActive()))
+        {
+            lift.setPower(power);
+            lift2.setPower(-power);
+        }
+
+        lift.setPower(0);
+        lift2.setPower(0);
+    }
     //----------------------------------------------------------------------------------------------------
     // Auto Runs
     //----------------------------------------------------------------------------------------------------
@@ -399,8 +452,45 @@ public class FibbyAuto extends LinearOpMode
 
     public void ConeDrop()
     {
+        //close grabber
+        grabber.setPosition(0);
+
         // move forward to push cone
-        // back up
+        GyroDriveENC(50, 0.5, 0);
+
+        // back up "centering the robot" and raise lift
+        // gyro drive ENC
+        liftENC(1290, 0.5);
+
+        // strafe left to pole
+        GyroStrafeENC(12, 0.5, "left",0);
+
+        // move forward to hover over pole
+        GyroDriveENC(1, 0.25, 0);
+
+        // drop cone
+        grabber.setPosition(0.0765);
+
+        // back up and lower lift
+        // gyro drive ENC
+        liftENC(0, 0.5);
+
+
+        if (coneImage == 1)
+        {
+            //strafe to zone 1
+            //gyro drive ENC
+        }
+        else if (coneImage == 2)
+        {
+            //strafe to zone 2
+            //gyro drive ENC
+        }
+        else
+        {
+            //strafe to zone 3
+            //gyro drive ENC
+        }
     }
 
 }

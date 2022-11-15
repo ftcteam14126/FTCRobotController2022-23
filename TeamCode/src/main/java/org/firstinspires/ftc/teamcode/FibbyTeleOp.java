@@ -66,6 +66,14 @@ public class FibbyTeleOp extends OpMode
     DigitalChannel L_limit;
     DigitalChannel U_limit;
 
+    double poleShort = 567;
+    double poleMid = 927;
+    double poleHigh = 1290;
+    double zero = 0;
+    double tolerance = 5;
+    char liftButton = 'n';
+
+
     //----------------------------------------------------------------------------------------------------
     // Initialization
     //----------------------------------------------------------------------------------------------------
@@ -92,7 +100,9 @@ public class FibbyTeleOp extends OpMode
         perpendicularEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         lift = hardwareMap.get(DcMotor.class,"Lift");
+        lift.setDirection(DcMotor.Direction.REVERSE);
         lift2 = hardwareMap.get(DcMotor.class,"Lift2");
+        lift2.setDirection(DcMotor.Direction.REVERSE);
 
         lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         lift2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -151,7 +161,7 @@ public class FibbyTeleOp extends OpMode
         double rightFrontPower;
         double rightRearPower;
 
-        double liftPower;
+        double liftPower =0;
 
 
         telemetry.addData("LF, RF, Parallel, Perpendicular, Lift", "Starting at %7d :%7d :%7d :%7d :%7d ",
@@ -192,18 +202,76 @@ public class FibbyTeleOp extends OpMode
         //Limit switch - false == pressed, true == not pressed
         //This if statement is broken into two chunks, if the driver is trying to lower the lift AND the lower limit is NOT pressed,
         // OOOOORRRRRR if the driver is trying to raise the lift and the upper limit switch is not pressed then run the lift motor, otherwise don't.
+        if (gamepad2.a)
+            liftButton = 'a';
+        else if (gamepad2.b)
+            liftButton = 'b';
+        else if (gamepad2.x)
+            liftButton = 'x';
+        else if (gamepad2.y)
+            liftButton = 'y';
 
-        if ((gamepad2.right_stick_y > 0 && L_limit.getState() == true) || (gamepad2.right_stick_y < 0 && U_limit.getState() == true))
-        //if (gamepad2.right_stick_y != 0)
+
+        if ((gamepad2.right_stick_y > 0 && L_limit.getState() == true) || (gamepad2.right_stick_y < 0 && lift.getCurrentPosition() <= poleHigh))
         {
+
             if(gamepad2.right_stick_y < 0)
-            liftPower = gamepad2.right_stick_y;
+                liftPower = gamepad2.right_stick_y;
+
             else
             liftPower = gamepad2.right_stick_y * .75;
         }
-        else {
-            liftPower = 0;
+       /* else {
+            liftButton = 'n';
         }
+*/
+
+        if (gamepad2.right_stick_y != 0)
+            liftButton = 'n';
+        else
+            if (liftButton == 'a') {
+                if ((lift.getCurrentPosition() > zero + tolerance) && (L_limit.getState() == true))
+                    liftPower = 0.5;
+                else
+                    liftButton = 'n';
+            } else if (liftButton == 'b') {
+                if ((lift.getCurrentPosition() > poleShort + tolerance) && (L_limit.getState() == true))
+                    liftPower = 0.5;
+                else if (lift.getCurrentPosition() < poleShort - tolerance)
+                    liftPower = -0.75;
+                else
+                    liftButton = 'n';
+            } else if (liftButton == 'x') {
+                if ((lift.getCurrentPosition() > poleMid + tolerance) && (L_limit.getState() == true))
+                    liftPower = 0.5;
+                else if (lift.getCurrentPosition() < poleMid - tolerance)
+                    liftPower = -0.75;
+                else
+                    liftButton = 'n';
+            } else if (liftButton == 'y') {
+                if ((lift.getCurrentPosition() > poleHigh + tolerance) && (L_limit.getState() == true))
+                    liftPower = 0.5;
+                else if (lift.getCurrentPosition() < poleHigh - tolerance)
+                    liftPower = -0.75;
+                else
+                    liftButton = 'n';
+            } else
+                liftPower = 0;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         leftFront.setPower(-leftFrontPower);
         rightFront.setPower(-rightFrontPower);
