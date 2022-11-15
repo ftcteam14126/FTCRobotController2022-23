@@ -40,131 +40,127 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.util.Encoder;
 
-/**
- * This particular OpMode executes a Tank Drive control TeleOp a direct drive robot
- * The code is structured as an Iterative OpMode
- *
- * In this mode, the left and right joysticks control the left and right motors respectively.
- * Pushing a joystick forward will make the attached motor drive forward.
- * It raises and lowers the claw using the Gamepad Y and A buttons respectively.
- * It also opens and closes the claws slowly using the left and right Bumper buttons.
- *
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
- */
+// TODO: rename limit switch var and hardware mapping
+// TODO: rename lift hardware mapping
 
-@TeleOp(name="FibbyTeleOp", group="TeleOp")
+// TODO: add gyro drive to TeleOp
+// TODO: control scheme for drivers
+// TODO: fix controls to make more sense or something new and better *cough* refer to game manual 0
+
 //@Disabled
+@TeleOp(name="FibbyTeleOp", group="TeleOp")
 public class FibbyTeleOp extends OpMode
 {
-
-    /* Declare OpMode members. */
     public DcMotor  leftFront   = null;
     public DcMotor  rightFront  = null;
-    public DcMotor  leftRear   = null;
-    public DcMotor  rightRear  = null;
+    public DcMotor  leftRear    = null;
+    public DcMotor  rightRear   = null;
+
+    private DcMotor parallelEncoder;
+    private DcMotor perpendicularEncoder;
+
     public Servo grabber = null;
 
     public DcMotor lift = null;
     public DcMotor lift2 = null;
     DigitalChannel L_limit;
     DigitalChannel U_limit;
-    private DcMotor parallelEncoder, perpendicularEncoder;
-    /*
-     * Code to run ONCE when the driver hits INIT
-     */
+
+    //----------------------------------------------------------------------------------------------------
+    // Initialization
+    //----------------------------------------------------------------------------------------------------
     @Override
-    public void init() {
-        // Define and Initialize Motors
+    public void init()
+    {
         leftFront  = hardwareMap.get(DcMotor.class, "leftFront");
+        leftRear   = hardwareMap.get(DcMotor.class, "leftRear");
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
-        leftRear  = hardwareMap.get(DcMotor.class, "leftRear");
-        rightRear = hardwareMap.get(DcMotor.class, "rightRear");
-        grabber = hardwareMap.get(Servo.class,"Grabber");
+        rightRear  = hardwareMap.get(DcMotor.class, "rightRear");
 
-
-
-        lift = hardwareMap.get(DcMotor.class,"Lift");
-        lift2 = hardwareMap.get(DcMotor.class,"Lift2");
-
-        L_limit = hardwareMap.get(DigitalChannel.class, "L_limit");
-        U_limit = hardwareMap.get(DigitalChannel.class, "U_limit");
-        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        lift2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        // set the digital channel to input.
-        L_limit.setMode(DigitalChannel.Mode.INPUT);
-        U_limit.setMode(DigitalChannel.Mode.INPUT);
-
-        // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
-        // Pushing the left and right sticks forward MUST make robot go forward. So adjust these two lines based on your first test drive.
-        // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
         leftFront.setDirection(DcMotor.Direction.REVERSE);
         rightFront.setDirection(DcMotor.Direction.FORWARD);
         leftRear.setDirection(DcMotor.Direction.REVERSE);
         rightRear.setDirection(DcMotor.Direction.FORWARD);
 
-       grabber.setPosition(0);
-
-
-        parallelEncoder = hardwareMap.get(DcMotor.class, "parallelEncoder");
+        parallelEncoder      = hardwareMap.get(DcMotor.class, "parallelEncoder");
         perpendicularEncoder = hardwareMap.get(DcMotor.class, "perpendicularEncoder");
+
+        parallelEncoder.setDirection(DcMotor.Direction.REVERSE);
+        perpendicularEncoder.setDirection(DcMotor.Direction.REVERSE);
 
         parallelEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         perpendicularEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-       perpendicularEncoder.setDirection(DcMotor.Direction.REVERSE);
-      parallelEncoder.setDirection(DcMotor.Direction.FORWARD);
+        lift = hardwareMap.get(DcMotor.class,"Lift");
+        lift2 = hardwareMap.get(DcMotor.class,"Lift2");
 
-        // If there are encoders connected, switch to RUN_USING_ENCODER mode for greater accuracy
-        // leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        // rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        lift2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // Define and initialize ALL installed servos.
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        // Send telemetry message to signify robot waiting;
-        telemetry.addData(">", "Robot Ready.  Press Play.");    //
+        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightRear.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        grabber = hardwareMap.get(Servo.class,"Grabber");
+        grabber.setPosition(0);
+
+        L_limit = hardwareMap.get(DigitalChannel.class, "L_limit");
+        U_limit = hardwareMap.get(DigitalChannel.class, "U_limit");
+
+        L_limit.setMode(DigitalChannel.Mode.INPUT);
+        U_limit.setMode(DigitalChannel.Mode.INPUT);
+
+        telemetry.addData(">", "Robot Ready.  Press Play.");
     }
 
-    /*
-     * Code to run REPEATEDLY after the driver hits INIT, but before they hit PLAY
-     */
+    //----------------------------------------------------------------------------------------------------
+    // Initialization Loop
+    //----------------------------------------------------------------------------------------------------
     @Override
     public void init_loop()
     {
 
     }
 
-    /*
-     * Code to run ONCE when the driver hits PLAY
-     */
+    //----------------------------------------------------------------------------------------------------
+    // Start
+    //----------------------------------------------------------------------------------------------------
     @Override
     public void start()
     {
 
     }
 
-    /*
-     * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
-     */
+    //----------------------------------------------------------------------------------------------------
+    // Loop
+    //----------------------------------------------------------------------------------------------------
     @Override
-    public void loop() {
+    public void loop()
+    {
         double leftFrontPower;
-        double rightFrontPower;
         double leftRearPower;
+        double rightFrontPower;
         double rightRearPower;
 
         double liftPower;
 
 
-        telemetry.addData("LF, RF, Parallel, Perpendicular", "Starting at %7d :%7d :%7d :%7d ",
+        telemetry.addData("LF, RF, Parallel, Perpendicular, Lift", "Starting at %7d :%7d :%7d :%7d :%7d ",
                 leftFront.getCurrentPosition(),
                 rightFront.getCurrentPosition(),
                 parallelEncoder.getCurrentPosition(),
-                perpendicularEncoder.getCurrentPosition());
+                perpendicularEncoder.getCurrentPosition(),
+                lift.getCurrentPosition());
         telemetry.update();
-        // Run wheels in tank mode (note: The joystick goes negative when pushed forward, so negate it)
-
 
         if (gamepad1.right_stick_y != 0) {
             leftFrontPower = -gamepad1.right_stick_y;
@@ -192,10 +188,10 @@ public class FibbyTeleOp extends OpMode
             leftRearPower = 0;
             rightRearPower = 0;
         }
+
         //Limit switch - false == pressed, true == not pressed
         //This if statement is broken into two chunks, if the driver is trying to lower the lift AND the lower limit is NOT pressed,
         // OOOOORRRRRR if the driver is trying to raise the lift and the upper limit switch is not pressed then run the lift motor, otherwise don't.
-
 
         if ((gamepad2.right_stick_y > 0 && L_limit.getState() == true) || (gamepad2.right_stick_y < 0 && U_limit.getState() == true))
         //if (gamepad2.right_stick_y != 0)
@@ -204,7 +200,8 @@ public class FibbyTeleOp extends OpMode
             liftPower = gamepad2.right_stick_y;
             else
             liftPower = gamepad2.right_stick_y * .75;
-        } else {
+        }
+        else {
             liftPower = 0;
         }
 
@@ -224,14 +221,8 @@ public class FibbyTeleOp extends OpMode
         else if (gamepad2.right_bumper){
             grabber.setPosition(0.0765);
         }
-
-
-
     }
 
-    /*
-     * Code to run ONCE after the driver hits STOP
-     */
     @Override
     public void stop()
     {

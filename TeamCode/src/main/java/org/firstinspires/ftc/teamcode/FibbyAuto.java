@@ -397,4 +397,10 @@ public class FibbyAuto extends LinearOpMode
         }
     }
 
+    public void ConeDrop()
+    {
+        // move forward to push cone
+        // back up
+    }
+
 }
